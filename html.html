@@ -1,0 +1,31 @@
+<html>
+    <body>
+        <textarea id="result"></textarea>
+    </body>
+</html>
+<script>
+    document.getElementById('result').addEventListener('paste', function(e) {
+    // 阻止粘贴
+    e.stopPropagation();
+    e.preventDefault();			 
+    // 获取剪贴板信息
+    var clipboardData = e.clipboardData || window.clipboardData;
+	var items = clipboardData.items;
+    console.log(items[0]);
+	for(var i=0; i<items.length; i++) {
+		var item = items[i];
+		if (item.kind == 'file') {
+			var pasteFile = item.getAsFile();
+			var reader = new FileReader();
+			reader.onload = function(event) {
+				// 将结果显示在<textarea>中
+				document.getElementById('result').value = event.target.result;
+                console.log(event.target.result);
+			}
+			// 将文件读取为BASE64格式字符串
+			reader.readAsDataURL(pasteFile);
+			break;
+		}
+	}				
+})
+</script>
