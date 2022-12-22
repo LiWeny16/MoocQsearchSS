@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hash算法</title>
+    <script type="text/javascript" src="https://raw.githubusercontent.com/brix/crypto-js/develop/src/md5.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+    // ======================== Hash算法 ========================
+    console.log('MD5:', CryptoJS.MD5("abc").toString());
+    console.log('SHA1:', CryptoJS.SHA1("abc").toString());
+    console.log('SHA256:', CryptoJS.SHA256("abc").toString());
+    console.log('hmac-sha1:', CryptoJS.HmacSHA1("abc", "123").toString());
+    console.log('hmac-sha256:', CryptoJS.HmacSHA256("abc", "123").toString());
+</script>
+</body>
+</html>

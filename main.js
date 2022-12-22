@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         慕课题目搜搜搜
 // @namespace    http://tampermonkey.net/
-// @version      0.2.2
+// @version      1.2.1
 // @description   题库查询小工具
 // @author       Onion
 // @match     https://www.icourse163.org/*
@@ -15,6 +15,7 @@
 // @connect    cx.icodef.com
 // @connect    huawei-cdn.lyck6.cn
 // @connect    tk.enncy.cn
+// @connect    web.baimiaoapp.com
 // @run-at       document-start
 // @license      MPL2.0
 // ==/UserScript==
@@ -24,15 +25,23 @@ function mainTop() {
     var yourQues
     var yzggToken = `ddMyyyPEhfHSzQBy`
     var enncyToken = `f2c5d9e2896074d1332d7ac67950d7ae`
+    var ocrToken = new Object()
+    let ocrSumResults = ""
+    ocrToken.cookie = `Hm_lvt_da96324d8afb3666d3f016c5f2201546=1661497750,1663156970,1663207463`
+    ocrToken.xauthToken = `FH7zqpgbhoSnlxJQSuI5MEiJN5X7W79Sx8ArOTrCzUAm5ZGJwG0YmZrQvZpd1D4x`
+    ocrToken.xauthUuid = `9fc76da6-6ab8-42d9-873c-801d081eb36a`
     var readyState = 0
-    const document=unsafeWindow.document;
+    const document = unsafeWindow.document;
+    const window = unsafeWindow
     if (window.location.href.indexOf("www.icourse163.org") > -1) {
         appendBox(0).then((res) => {
             initBox()
             addBoxEvent()
             addMoveEvent()
             addSearchEvent()
-            keyEvent()
+            pic2WordsEvent()
+
+            //  keyEvent()
         })
         addBothStyle()
 
@@ -43,21 +52,16 @@ function mainTop() {
             var divId = document.createAttribute("id"); //创建属性
             divId.value = 'gptDiv'; //设置属性值
             divE.setAttributeNode(divId); //给div添加属性
-            var pE = document.createElement('p');
-            var pClass = document.createAttribute('class');
-            pClass.value = 'textClass';
-            pE.setAttributeNode(pClass)
-            var pText = document.createTextNode("chatGPT tools Plus ++ v0.0.1已启动");
-            pE.appendChild(pText);
-            divE.appendChild(pE);
             divE.innerHTML = `
                 <div id="gptInputBox">
-                    <textarea id="gptInput" type=text></textarea><button id="button_GPT">搜一下</button>
+                   <textarea id="gptInput" type=text></textarea>
+                   <button id="button_GPT">搜一下</button>
                 </div>
                 <div id=gptCueBox>
                     <div id="gptAnswer" class="markdown-body">
                         <div id="gptAnswer_inner">慕课题目搜搜搜v0.0.1已启动</div>
-                        <div id="loadingBox">加载中<span id="dot"></span></div>
+                        <div id="loadingBox">加载中<span class="dot"></span></div>
+                        <div id="loadingBoxImg">图片转文字中,请稍等<span class="dot"></span></div>
                     </div>
                 </div>
                 <div id="gptSettingBox">
@@ -102,7 +106,7 @@ function mainTop() {
                 switch (append_case) {
                     case 0: //bing
                         if (divE) {
-                           document.body.prepend(divE)
+                            document.body.prepend(divE)
                         }
                         break;
                     case 1://google
@@ -212,7 +216,7 @@ function mainTop() {
 
  }
 /*dots*/
-  #dot{
+  .dot{
     height: 4px;
     width: 4px;
     display: inline-block;
@@ -269,7 +273,7 @@ function mainTop() {
             document.getElementById('spreadOrShrink').innerHTML = "\u21e4"
         }
         document.getElementById('loadingBox').style.display = "none" //不展示
-
+        document.getElementById('loadingBoxImg').style.display = "none" //不展示
     }
     function setCookie(cname, cvalue, exdays) {
         var d = new Date();
@@ -343,7 +347,7 @@ function mainTop() {
     //搜题部分
     function getQues() {
         yourQues = document.getElementById('gptInput').value
-        return document.getElementById('gptInput').value
+        return document.getElementById('gptInput').value.trim()
     }
     function getAllAnswer() {
         if (document.getElementById('gptInput').value !== "") {
@@ -358,17 +362,17 @@ function mainTop() {
                     if (enncyToken !== "") {
                         readyState++
                         getAnswer(2).then(() => {
-                        //    if (readyState == 2) {
-                                document.getElementById('loadingBox').style.display = "none"
-                                readyState = 0
-                        //    }
+                            //    if (readyState == 2) {
+                            document.getElementById('loadingBox').style.display = "none"
+                            readyState = 0
+                            //    }
                         })
                     }
                     else {
-                   //     if (readyState == 1) {
-                            document.getElementById('loadingBox').style.display = "none"
-                            readyState = 0
-                      //  }
+                        //     if (readyState == 1) {
+                        document.getElementById('loadingBox').style.display = "none"
+                        readyState = 0
+                        //  }
                     }
                 })
                 .catch((err) => {
@@ -496,6 +500,185 @@ function mainTop() {
 
 
     }
+    function pic2WordsEvent() {
+        document.getElementById('gptInput').addEventListener('paste', (e) => {
+            pic2base64(e).then((base64data) => {
+                if (base64data) {
+                    if (!ocrToken.xauthToken||!ocrToken.xauthUuid||!ocrToken.cookie) {
+                        log(`你妹有白描cookie（悲<br><a href="https://web.baimiaoapp.com/">点我去白描官网买</a>`)
+                    }
+                    else {
+                        console.log(base64data);
+                        log(`尊贵的白描黄金VIP,欢迎`)
+                        document.getElementById('loadingBoxImg').style.display = "block"
+                        sendOcrMode()
+                            .then((sendOcrModeRes) => {
+                                console.log(sendOcrModeRes);
+                                return sendOcrData(JSON.parse(sendOcrModeRes).data.token, base64data)
+                            })
+                            .then((sendOcrDataRes) => {
+                                // console.log(JSON.parse(sendOcrDataRes).data.jobStatusId);
+                                return JSON.parse(sendOcrDataRes).data.jobStatusId
+                            })
+                            .then((jobStatusId) => {
+                                console.log(jobStatusId);
+                                sleep(2000).then(() => {
+                                    getOcrResults(jobStatusId)
+                                        .then((finalRes) => {
+                                            if (JSON.parse(finalRes).code) {
+                                                for (let i = 0; i <= JSON.parse(finalRes).data.ydResp.data.lines.length - 1; i++) {
+                                                    ocrSumResults += JSON.parse(finalRes).data.ydResp.data.lines[i].text
+                                                }
+                                            }
+                                            else {
+                                                log(`emmm,网络有点卡,再试一次吧！`)
+                                            }
+
+                                        }).then(() => {
+                                            if (ocrSumResults == "") {
+                                                log(`奇怪的情况出现了（惊`)
+                                            }
+                                            else { document.getElementById('gptInput').value = `${ocrSumResults.trim()}` }
+                                        }).then(() => {
+                                            ocrSumResults = ""
+                                        }).then(() => {
+                                            document.getElementById('loadingBoxImg').style.display = "none"
+                                        })
+                                })
+
+
+                            })
+                    }
+
+                }
+                else {
+                    console.log("原来只是正常的复制而已（*~*)");
+                }
+
+            })
+        })
+    }
+    function pic2base64(e) {
+        return new Promise((resolve) => {
+            e.stopPropagation();
+            // e.preventDefault();
+            // 阻止粘贴
+            // 获取剪贴板信息
+            var clipboardData = e.clipboardData || window.clipboardData;
+            var items = clipboardData.items;
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (item.kind == 'file') {
+                    var pasteFile = item.getAsFile();
+                    var reader = new FileReader();
+                    reader.onload = function (event) {
+                        // 将结果显示在<textarea>中
+                        resolve(event.target.result)
+                        //  console.log(event.target.result);
+                    }
+                    // 将文件读取为BASE64格式字符串
+                    reader.readAsDataURL(pasteFile);
+                    break;
+                }
+                else {
+                    resolve(0)
+                }
+            }
+        })
+    }
+    const sleep = (time) => {
+        return new Promise(resolve => setTimeout(resolve, time))
+    }
+    function getOcrResults(jobStatusId) {
+        return new Promise((resolve) => {
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: `https://web.baimiaoapp.com/api/ocr/image/xunfei/status?jobStatusId=${jobStatusId}`,
+                headers: {
+                    "Content-Type": "application/json;charset=UTF-8",
+                    "x-auth-token": ocrToken.xauthToken,
+                    "x-auth-uuid": ocrToken.xauthUuid,
+                    "Cookie": ocrToken.cookie,
+                    "Connection": "keep-alive",
+                    "Accept": "*/*"
+                },
+                onloadend: function (data) {
+                    try {
+                        resolve(data.response)
+                    } catch (err) {
+                        logAdd(`err:${err}`)
+                    }
+                },
+                onerror: function (err) {
+                    logAdd(`err:${err}`)
+                },
+                ontimeout: function (err) {
+                    logAdd(`err:${err}`)
+                }
+            })
+        })
+
+    }
+    function sendOcrData(nextToken, base64data) {
+        return new Promise((resolve) => {
+            GM_xmlhttpRequest({
+                method: "POST",
+                url: "https://web.baimiaoapp.com/api/ocr/image/xunfei",
+                headers: {
+                    "Content-Type": "application/json;charset=UTF-8",
+                    "x-auth-token": ocrToken.xauthToken,
+                    "x-auth-uuid": ocrToken.xauthUuid,
+                    "Cookie": ocrToken.cookie,
+                    "Connection": "keep-alive",
+                    "Accept": "*/*"
+                },
+                data: `{"token":"${nextToken}","hash":"3f9c056379f0457c564290f6e15a9c232f1e5557","name":"image.png","size":13764,"dataUrl":"${base64data}","result":{},"status":"processing","isSuccess":false}`,
+                onloadend: function (data) {
+                    try {
+                        resolve(data.response)
+                    } catch (err) {
+                        logAdd(`err:${err}`)
+                    }
+                },
+                onerror: function (err) {
+                    logAdd(`err:${err}`)
+                },
+                ontimeout: function (err) {
+                    logAdd(`err:${err}`)
+                }
+            })
+        })
+
+    }
+    function sendOcrMode() {
+        return new Promise((resolve) => {
+            GM_xmlhttpRequest({
+                method: "POST",
+                url: "https://web.baimiaoapp.com/api/perm/single",
+                headers: {
+                    "Content-Type": "application/json;charset=UTF-8",
+                    "x-auth-token": ocrToken.xauthToken,
+                    "x-auth-uuid": ocrToken.xauthUuid,
+                    cookie: ocrToken.cookie
+                },
+                data: `{"mode": "single"}`,
+                onloadend: function (data) {
+                    try {
+                        resolve(data.response)
+                    } catch (err) {
+                        logAdd(`err:${err}`)
+                    }
+                },
+                onerror: function (err) {
+                    logAdd(`err:${err}`)
+                },
+                ontimeout: function (err) {
+                    logAdd(`err:${err}`)
+                }
+            })
+        })
+
+    }
     function addSearchEvent() {
         document.getElementById('button_GPT').addEventListener("click", () => {
             getAllAnswer()
@@ -524,6 +707,20 @@ function mainTop() {
             return 0
         }
     }
+    function getBase64Size(base64) {//获取base64字符串的大小
+        /*
+            参考：https://www.jb51.net/article/172316.htm
+            并优化后代码
+        */
+        if (base64) { // 获取base64图片byte大小
+            base64 = base64.split(",")[1].split("=")[0];
+            var strLength = base64.length;
+            var fileLength = strLength - (strLength / 8) * 2;
+            return Math.floor(fileLength); // 向下取整
+        } else {
+            return null
+        }
+    };
     function log(temp_1) {
         document.getElementById('gptAnswer_inner').innerHTML = temp_1
     }
