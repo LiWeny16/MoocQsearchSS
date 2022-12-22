@@ -5,9 +5,13 @@
 // @description   题库查询小工具
 // @author       Onion
 // @match     https://www.icourse163.org/*
+// @match     https://i.chaoxing.com/*
+// @match     https://mooc2-ans.chaoxing.com/*
+// @match     https://mooc1.chaoxing.com/*
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=icourse163.org
 // @grant        GM_addStyle
 // @grant        GM_xmlhttpRequest
+// @grant        unsafeWindow
 // @connect    cx.icodef.com
 // @connect    huawei-cdn.lyck6.cn
 // @connect    tk.enncy.cn
@@ -21,6 +25,7 @@ function mainTop() {
     var yzggToken = `ddMyyyPEhfHSzQBy`
     var enncyToken = `f2c5d9e2896074d1332d7ac67950d7ae`
     var readyState = 0
+    const document=unsafeWindow.document;
     if (window.location.href.indexOf("www.icourse163.org") > -1) {
         appendBox(0).then((res) => {
             initBox()
@@ -42,7 +47,7 @@ function mainTop() {
             var pClass = document.createAttribute('class');
             pClass.value = 'textClass';
             pE.setAttributeNode(pClass)
-            var pText = document.createTextNode("");
+            var pText = document.createTextNode("chatGPT tools Plus ++ v0.0.1已启动");
             pE.appendChild(pText);
             divE.appendChild(pE);
             divE.innerHTML = `
@@ -51,7 +56,7 @@ function mainTop() {
                 </div>
                 <div id=gptCueBox>
                     <div id="gptAnswer" class="markdown-body">
-                        <div id="gptAnswer_inner">慕课题目搜搜搜v0.2.2已启动</div>
+                        <div id="gptAnswer_inner">慕课题目搜搜搜v0.0.1已启动</div>
                         <div id="loadingBox">加载中<span id="dot"></span></div>
                     </div>
                 </div>
@@ -97,7 +102,7 @@ function mainTop() {
                 switch (append_case) {
                     case 0: //bing
                         if (divE) {
-                            document.querySelector("body").prepend(divE)
+                           document.body.prepend(divE)
                         }
                         break;
                     case 1://google
@@ -353,17 +358,17 @@ function mainTop() {
                     if (enncyToken !== "") {
                         readyState++
                         getAnswer(2).then(() => {
-                            if (readyState == 2) {
+                        //    if (readyState == 2) {
                                 document.getElementById('loadingBox').style.display = "none"
                                 readyState = 0
-                            }
+                        //    }
                         })
                     }
                     else {
-                        if (readyState == 1) {
+                   //     if (readyState == 1) {
                             document.getElementById('loadingBox').style.display = "none"
                             readyState = 0
-                        }
+                      //  }
                     }
                 })
                 .catch((err) => {
