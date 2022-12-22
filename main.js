@@ -24,12 +24,12 @@ function mainTop() {
     'use strict';
     var yourQues
     var yzggToken = `ddMyyyPEhfHSzQBy`
-    var enncyToken = `f2c5d9e2896074d1332d7ac67950d7ae`
+    var enncyToken = ``
     var ocrToken = new Object()
     let ocrSumResults = ""
-    ocrToken.cookie = `Hm_lvt_da96324d8afb3666d3f016c5f2201546=1661497750,1663156970,1663207463`
-    ocrToken.xauthToken = `FH7zqpgbhoSnlxJQSuI5MEiJN5X7W79Sx8ArOTrCzUAm5ZGJwG0YmZrQvZpd1D4x`
-    ocrToken.xauthUuid = `9fc76da6-6ab8-42d9-873c-801d081eb36a`
+    ocrToken.cookie = ``
+    ocrToken.xauthToken = ``
+    ocrToken.xauthUuid = ``
     var readyState = 0
     const document = unsafeWindow.document;
     const window = unsafeWindow
@@ -59,7 +59,7 @@ function mainTop() {
                 </div>
                 <div id=gptCueBox>
                     <div id="gptAnswer" class="markdown-body">
-                        <div id="gptAnswer_inner">慕课题目搜搜搜v0.0.1已启动</div>
+                        <div id="gptAnswer_inner">慕课题目搜搜搜v1.2.1已启动</div>
                         <div id="loadingBox">加载中<span class="dot"></span></div>
                         <div id="loadingBoxImg">图片转文字中,请稍等<span class="dot"></span></div>
                     </div>
