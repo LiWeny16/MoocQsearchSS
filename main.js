@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         慕课题目搜搜搜
 // @namespace    http://tampermonkey.net/
-// @version      1.2.1
+// @version      1.3.2
 // @description   题库查询小工具
 // @author       Onion
 // @match     https://www.icourse163.org/*
@@ -16,28 +16,68 @@
 // @connect    huawei-cdn.lyck6.cn
 // @connect    tk.enncy.cn
 // @connect    web.baimiaoapp.com
+// @connect    lyck6.cn
+// @connect    cx.gocos.cn
 // @run-at       document-start
 // @license      MPL2.0
 // ==/UserScript==
 function mainTop() {
 
     'use strict';
-    var yourQues
+    var ocrToken = new Object()
+    var webSet = new Array()
+    var GM_abort = new Array()
+    let ocrSumResults = ""
+    const document = unsafeWindow.document;
+    const window = unsafeWindow
+
+    //////////【配////////置//////////区】//////////////
     var yzggToken = `ddMyyyPEhfHSzQBy`
     var enncyToken = ``
-    var ocrToken = new Object()
-    let ocrSumResults = ""
     ocrToken.cookie = ``
     ocrToken.xauthToken = ``
     ocrToken.xauthUuid = ``
-    var readyState = 0
-    const document = unsafeWindow.document;
-    const window = unsafeWindow
+    webSet = [
+        "huawei-cdn.lyck6.cn",
+        "lyck6.cn",
+        "tk.enncy.cn",
+        "cx.icodef.com"
+    ]
+    ////////////////////////////////////////////
     if (window.location.href.indexOf("www.icourse163.org") > -1) {
         appendBox(0).then((res) => {
             initBox()
             addBoxEvent()
             addMoveEvent()
+            appendQuesEvent()
+            addSearchEvent()
+            pic2WordsEvent()
+
+            //  keyEvent()
+        })
+        addBothStyle()
+
+    }
+    if (window.location.href.indexOf("i.chaoxing.com/base") > -1) {
+        appendBox(0).then((res) => {
+            initBox()
+            addBoxEvent()
+            addMoveEvent()
+            appendQuesEvent()
+            addSearchEvent()
+            pic2WordsEvent()
+
+            //  keyEvent()
+        })
+        addBothStyle()
+
+    }
+    if (window.location.href.indexOf("mooc1.chaoxing.com/mycourse/studentstudy") > -1) {
+        appendBox(0).then((res) => {
+            initBox()
+            addBoxEvent()
+            addMoveEvent()
+            appendQuesEvent()
             addSearchEvent()
             pic2WordsEvent()
 
@@ -97,8 +137,6 @@ function mainTop() {
             do_it()
 
         })
-
-
     }
     async function appendBox(append_case) {
         return new Promise((resolve, reject) => {
@@ -259,6 +297,9 @@ function mainTop() {
             })
         }
     }
+    function controlBoxDisplay(id,way){
+        document.getElementById(`${id}`).style.display=`${way}`
+    }
     function initBox() {
         if (getCookie("isShrink") == 0) {
             document.getElementById('gptInputBox').style.display = "flex"
@@ -272,8 +313,8 @@ function mainTop() {
             document.getElementById('gptDiv').style.width = "1.5vh"
             document.getElementById('spreadOrShrink').innerHTML = "\u21e4"
         }
-        document.getElementById('loadingBox').style.display = "none" //不展示
-        document.getElementById('loadingBoxImg').style.display = "none" //不展示
+        controlBoxDisplay("loadingBox","none")//默认不展示
+        controlBoxDisplay("loadingBoxImg","none")//默认不展示
     }
     function setCookie(cname, cvalue, exdays) {
         var d = new Date();
@@ -346,38 +387,38 @@ function mainTop() {
 
     //搜题部分
     function getQues() {
-        yourQues = document.getElementById('gptInput').value
         return document.getElementById('gptInput').value.trim()
+    }
+    function appendQuesEvent(){
+        document.addEventListener("mouseup",()=>{
+            if(unsafeWindow.getSelection().toString().replace(/(\s)|(\\n)/g,"")!==""){
+                document.getElementById('gptInput').value=unsafeWindow.getSelection().toString().replace(/(\s)|(\\n)/g,"")
+            }
+        });
     }
     function getAllAnswer() {
         if (document.getElementById('gptInput').value !== "") {
-            document.getElementById('loadingBox').style.display = "block"
+            controlBoxDisplay("loadingBox","block")
             document.getElementById('gptAnswer_inner').innerHTML = ``
             getAnswer(1)
                 .then(() => {
-                    readyState++
-                    return getAnswer(0)
-                })
+                return getAnswer(0)
+            })
                 .then(() => {
-                    if (enncyToken !== "") {
-                        readyState++
-                        getAnswer(2).then(() => {
-                            //    if (readyState == 2) {
-                            document.getElementById('loadingBox').style.display = "none"
-                            readyState = 0
-                            //    }
-                        })
-                    }
-                    else {
-                        //     if (readyState == 1) {
-                        document.getElementById('loadingBox').style.display = "none"
-                        readyState = 0
-                        //  }
-                    }
-                })
+                return getAnswer(3)
+            })
+                .then(()=>{
+                if (enncyToken !== "") {
+                    return getAnswer(2)
+                }
+            })
+                .then(()=>{
+                controlBoxDisplay("loadingBox","none")
+                console.log("finished");
+            })
                 .catch((err) => {
-                    log(err)
-                })
+                log(err)
+            })
         }
         else {
             document.getElementById('gptAnswer_inner').innerHTML = `<div>搜索内容不能为空</div>`
@@ -388,7 +429,7 @@ function mainTop() {
             if (document.getElementById('gptInput').value !== "") {
                 switch (chooseCase) {
                     case 0:
-                        GM_xmlhttpRequest({
+                        GM_abort[0] = GM_xmlhttpRequest({
                             method: "POST",
                             url: "https://cx.icodef.com/wyn-nb",
                             headers: {
@@ -401,10 +442,10 @@ function mainTop() {
                                     let parsedAnswer = JSON.parse(data.response).data
                                     resolve(data.response)
                                     if (parsedAnswer.match(/http.+/g)) {
-                                        logAdd(`<br><b>一之哥哥</b>: <img src="${parsedAnswer}" alt="">`)
+                                        logAdd(`<br><b>一之哥哥</b>：<img src="${parsedAnswer}" alt="">`)
                                     }
                                     else {
-                                        document.getElementById('gptAnswer_inner').innerHTML += `<br><b>一之哥哥</b>:${parsedAnswer}<br>`
+                                        logAdd(`<br><b>一之哥哥</b>：${parsedAnswer}<br>`)
                                     }
                                 } catch (err) {
                                     logAdd(`<br><b>一之哥哥err</b>:${err}`)
@@ -419,20 +460,21 @@ function mainTop() {
                         })
                         break;
                     case 1:
-                        GM_xmlhttpRequest({
+                        GM_abort[1] = GM_xmlhttpRequest({
                             method: "POST",
-                            url: "http://huawei-cdn.lyck6.cn/api/autoFreeAnswer",
+                            url: `http://${webSet[1]}/api/autoFreeAnswer`,
                             headers: {
                                 "Content-Type": "application/json",
                             },
                             data: `{"question": "${getQues()}"}`,
                             onloadend: function (data) {
                                 try {
+                                    console.log(data.response)
                                     let allAns = ""
                                     for (let i = 0; i <= 2; i++) {
                                         allAns += `<b>${i}</b>：${JSON.parse(data.response).data.list[i]}\n\n`
                                     }
-                                    document.getElementById('gptAnswer_inner').innerHTML = `<b>【万能】全平台</b>：${allAns}<br>`
+                                    logAdd(`<b>【万能】全平台</b>：${allAns}<br>`)
                                 } catch (err) {
                                     logAdd(`<b>【万能】全平台</b>：点的太快了gg，再试一次；<br><b>错误信息</b>："${err}"<br>`)
                                 }
@@ -447,7 +489,7 @@ function mainTop() {
                         })
                         break;
                     case 2:
-                        GM_xmlhttpRequest({
+                        GM_abort[2] = GM_xmlhttpRequest({
                             method: "GET",
                             url: `https://tk.enncy.cn/query?title=${getQues()}&token=${enncyToken}`,
                             headers: {
@@ -455,9 +497,38 @@ function mainTop() {
                             },
                             onloadend: function (data) {
                                 try {
-                                    document.getElementById('gptAnswer_inner').innerHTML += `<br><b>enncy题库</b>:${JSON.parse(data.response).data.answer}`
+                                    logAdd(`<br><b>enncy题库</b>：${JSON.parse(data.response).data.answer}`)
                                 } catch (err) {
-                                    logAdd(`enncyERR:${err}`);
+                                    logAdd(`<br><b>enncyERR</b>：${err}`);
+                                }
+                                resolve(data.response)
+                            },
+                            onerror: function (err) {
+                                throw new Error('Error while executing the code');
+                            },
+                            ontimeout: function (err) {
+                                throw new Error('Error while executing the code');
+                            }
+                        })
+                        break;
+                    case 3:
+                        GM_abort[3] = GM_xmlhttpRequest({
+                            method: "POST",
+                            url: `https://cx.gocos.cn/api/v1/cx?v=1.7.8`,
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            data: `question=${getQues()}`,
+                            onloadend: function (data) {
+                                try {
+                                    if (JSON.parse(data.response).data.answer == "") {
+                                        logAdd(`<br><b>Ne-21题库</b>：${JSON.parse(data.response).msg}`)
+                                    }
+                                    else {
+                                        logAdd(`<br><b>Ne-21题库</b>：${JSON.parse(data.response).data.answer}`)
+                                    }
+                                } catch (err) {
+                                    logAdd(`<br><b>Ne-21题库ERR</b>：${err}`);
                                 }
                                 resolve(data.response)
                             },
@@ -470,7 +541,7 @@ function mainTop() {
                         })
                         break;
                     default:
-                        GM_xmlhttpRequest({
+                        GM_abort[4] = GM_xmlhttpRequest({
                             method: "POST",
                             url: "https://cx.icodef.com/wyn-nb",
                             headers: {
@@ -504,50 +575,50 @@ function mainTop() {
         document.getElementById('gptInput').addEventListener('paste', (e) => {
             pic2base64(e).then((base64data) => {
                 if (base64data) {
-                    if (!ocrToken.xauthToken||!ocrToken.xauthUuid||!ocrToken.cookie) {
+                    if (!ocrToken.xauthToken || !ocrToken.xauthUuid || !ocrToken.cookie) {
                         log(`你妹有白描cookie（悲<br><a href="https://web.baimiaoapp.com/">点我去白描官网买</a>`)
                     }
                     else {
                         console.log(base64data);
                         log(`尊贵的白描黄金VIP,欢迎`)
-                        document.getElementById('loadingBoxImg').style.display = "block"
+                        controlBoxDisplay("loadingBoxImg","block")
                         sendOcrMode()
                             .then((sendOcrModeRes) => {
-                                console.log(sendOcrModeRes);
-                                return sendOcrData(JSON.parse(sendOcrModeRes).data.token, base64data)
-                            })
+                            console.log(sendOcrModeRes);
+                            return sendOcrData(JSON.parse(sendOcrModeRes).data.token, base64data)
+                        })
                             .then((sendOcrDataRes) => {
-                                // console.log(JSON.parse(sendOcrDataRes).data.jobStatusId);
-                                return JSON.parse(sendOcrDataRes).data.jobStatusId
-                            })
+                            // console.log(JSON.parse(sendOcrDataRes).data.jobStatusId);
+                            return JSON.parse(sendOcrDataRes).data.jobStatusId
+                        })
                             .then((jobStatusId) => {
-                                console.log(jobStatusId);
-                                sleep(2000).then(() => {
-                                    getOcrResults(jobStatusId)
-                                        .then((finalRes) => {
-                                            if (JSON.parse(finalRes).code) {
-                                                for (let i = 0; i <= JSON.parse(finalRes).data.ydResp.data.lines.length - 1; i++) {
-                                                    ocrSumResults += JSON.parse(finalRes).data.ydResp.data.lines[i].text
-                                                }
-                                            }
-                                            else {
-                                                log(`emmm,网络有点卡,再试一次吧！`)
-                                            }
+                            console.log(jobStatusId);
+                            sleep(2000).then(() => {
+                                getOcrResults(jobStatusId)
+                                    .then((finalRes) => {
+                                    if (JSON.parse(finalRes).code) {
+                                        for (let i = 0; i <= JSON.parse(finalRes).data.ydResp.data.lines.length - 1; i++) {
+                                            ocrSumResults += JSON.parse(finalRes).data.ydResp.data.lines[i].text
+                                        }
+                                    }
+                                    else {
+                                        log(`emmm,网络有点卡,再试一次吧！`)
+                                    }
 
-                                        }).then(() => {
-                                            if (ocrSumResults == "") {
-                                                log(`奇怪的情况出现了（惊`)
-                                            }
-                                            else { document.getElementById('gptInput').value = `${ocrSumResults.trim()}` }
-                                        }).then(() => {
-                                            ocrSumResults = ""
-                                        }).then(() => {
-                                            document.getElementById('loadingBoxImg').style.display = "none"
-                                        })
+                                }).then(() => {
+                                    if (ocrSumResults == "") {
+                                        log(`奇怪的情况出现了（惊`)
+                                    }
+                                    else { document.getElementById('gptInput').value = `${ocrSumResults.trim()}` }
+                                }).then(() => {
+                                    ocrSumResults = ""
+                                }).then(() => {
+                                    controlBoxDisplay("loadingBoxImg","none")
                                 })
-
-
                             })
+
+
+                        })
                     }
 
                 }
