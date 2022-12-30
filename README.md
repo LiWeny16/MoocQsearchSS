@@ -79,5 +79,8 @@
 
 + MPL2.0
 
+## 交流群  
++ QQ：557089262
+
 ## 致谢
 1. [steven026](https://bbs.tampermonkey.net.cn/space-uid-55086.html)关于unsafeWindow的处理
