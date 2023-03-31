@@ -84,3 +84,13 @@
 
 ## 致谢
 1. [steven026](https://bbs.tampermonkey.net.cn/space-uid-55086.html)关于unsafeWindow的处理
+
+## 关于
+
+作者：bigonion
+邮箱：bigonion@bigonion.cn  
+
+NameSpace: [bigonion.cn](https://bigonion.cn)   
+Origin: [bigonion.cn/blog](https://bigonion.cn/blog)    
+
+Powered by [md.bigonion.cn](https://bigonion.cn/blog)   
